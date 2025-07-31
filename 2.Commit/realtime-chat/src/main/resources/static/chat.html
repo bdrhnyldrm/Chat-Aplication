@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerçek Zamanlı Sohbet</title>
+</head>
+<body>
+<h2>Gerçek Zamanlı Mesajlaşma</h2>
+
+<label>👤 Kullanıcı Adı: <input type="text" id="username" /></label> <!-- Kullanıcı adını girmek için giriş alanı -->
+<br/>
+<label>📩 Alıcı: <input type="text" id="receiver" /></label> <!-- Mesajın gönderileceği alıcıyı girmek için giriş alanı -->
+<br/>
+<label>✏️ Mesaj: <input type="text" id="message" /></label> <!-- Gönderilecek mesajı girmek için giriş alanı -->
+<br/>
+<button onclick="connect()">🔌 Bağlan</button> <!-- WebSocket bağlantısını başlatan buton -->
+<button onclick="sendMessage()">📨 Gönder</button> <!-- Mesaj göndermek için kullanılan buton -->
+
+<hr>
+<div id="chat-box"></div> <!-- Gelen mesajların görüntüleneceği alan -->
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script> <!-- SockJS kütüphanesi -->
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script> <!-- STOMP protokolü için kütüphane -->
+
+<script>
+    let stompClient = null; // STOMP istemcisi
+    let username = ""; // Kullanıcı adı
+
+    function connect() {
+        username = document.getElementById("username").value; // Kullanıcı adını alır
+
+        const socket = new SockJS("/chat"); // SockJS bağlantısını başlatır
+        stompClient = Stomp.over(socket); // STOMP istemcisini oluşturur
+
+        stompClient.connect({}, function () {
+            alert(username + " olarak bağlandın!"); // Bağlantı başarılı olduğunda kullanıcıya bilgi verir
+
+            fetch(`/messages/${username}/${document.getElementById("receiver").value}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(msg => {
+                        const display = msg.sender + ": " + msg.content;
+                        document.getElementById("chat-box").innerHTML += `<p>${display}</p>`;
+                    });
+                });
+
+            stompClient.subscribe("/topic/messages/" + username, function (message) {
+                const msg = JSON.parse(message.body);
+                const display = `${msg.sender}: ${msg.content} (${msg.status})`;
+                document.getElementById("chat-box").innerHTML += `<p>${display}</p>`;
+
+                // Eğer mesaj zaten READ ise tekrar okundu olarak işaretleme
+                if (msg.status !== "READ") {
+                    fetch(`/messages/${msg.id}/read`, {
+                        method: "PUT"
+                    });
+                }
+            });
+        });
+    }
+
+    function sendMessage() {
+        const content = document.getElementById("message").value; // Mesaj içeriğini alır
+        const receiver = document.getElementById("receiver").value; // Alıcı bilgisini alır
+
+        stompClient.send("/app/chat", {}, JSON.stringify({
+            sender: username, // Mesajı gönderen kullanıcı
+            receiver: receiver, // Mesajın alıcısı
+            content: content // Mesajın içeriği
+        })); // Mesajı sunucuya gönderir
+    }
+</script>
+</body>
+</html>
