@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Giriş Yap</title>
+</head>
+<body>
+<h2>🔐 Giriş Yap</h2>
+
+<form onsubmit="login(); return false;">
+    <label>Kullanıcı Adı: <input type="text" id="username" required /></label><br/>
+    <label>Şifre: <input type="password" id="password" required /></label><br/>
+    <button type="submit">Giriş Yap</button>
+</form>
+
+<p>Hesabınız yok mu?</p>
+<button onclick="window.location.href='/register.html'">🆕 Kayıt Ol</button>
+
+<script>
+    function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      })
+      .then(res => res.text())
+      .then(response => {
+        if (response === "Giriş başarılı") {
+          alert("✅ Giriş başarılı!");
+          window.location.href = "/chat.html?user=" + encodeURIComponent(username);
+        } else {
+          alert("❌ Hatalı giriş: " + response);
+        }
+      });
+    }
+</script>
+</body>
+</html>
