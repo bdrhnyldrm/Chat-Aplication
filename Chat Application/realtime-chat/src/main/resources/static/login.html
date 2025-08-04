@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Giriş Yap</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<div class="container">
+    <div class="card" style="width:100%;max-width:420px">
+        <h2>🔐 Giriş Yap</h2>
+        <form id="loginForm">
+            <label for="username">Kullanıcı Adı</label>
+            <input id="username" required autofocus />
+            <label for="password">Şifre</label>
+            <input id="password" type="password" required />
+            <button type="submit" id="btnLogin" class="full">Giriş Yap</button>
+            <div id="error" class="badge" style="display:none"></div>
+        </form>
+        <p class="muted">Hesabınız yok mu? <a href="/register.html">Kayıt Ol</a></p>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById("loginForm");
+    const errBox = document.getElementById("error");
+    const btn = document.getElementById("btnLogin");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errBox.style.display = "none";
+      btn.disabled = true; btn.textContent = "Giriş yapılıyor…";
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      try {
+        const res = await fetch("/auth/login", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ username, password })
+        });
+        const text = await res.text();
+        if (text === "Giriş başarılı") {
+          window.location.href = "/chat.html?user=" + encodeURIComponent(username);
+        } else {
+          throw new Error(text || "Hatalı giriş");
+        }
+      } catch (err) {
+        errBox.textContent = "❌ " + err.message;
+        errBox.style.display = "block";
+      } finally {
+        btn.disabled = false; btn.textContent = "Giriş Yap";
+      }
+    });
+</script>
+</body>
+</html>

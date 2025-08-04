@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Sohbet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<div class="page">
+    <div class="toolbar">
+        <h2 style="margin:0">💬 Gerçek Zamanlı Sohbet</h2>
+        <p id="greeting" class="muted" style="margin:0"></p>
+    </div>
+
+    <div class="chat">
+        <div class="col">
+            <div class="card">
+                <div class="row" style="justify-content:space-between;align-items:center">
+                    <h3 style="margin:0">👥 Kişi Listesi</h3>
+                    <span id="user-count" class="badge success" style="margin:0">0</span>
+                </div>
+                <ul id="user-list" class="list"></ul>
+            </div>
+
+            <div class="card">
+                <div class="row" style="justify-content:space-between;align-items:center">
+                    <h3 style="margin:0">🗂 Sohbet Geçmişi</h3>
+                    <span id="conv-count" class="badge success" style="margin:0">0</span>
+                </div>
+                <ul id="conversation-list" class="list"></ul>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card">
+                <div class="row" style="align-items:center;gap:12px">
+                    <label style="margin:0;min-width:60px">Alıcı:</label>
+                    <input type="text" id="receiver" placeholder="Kişi seç veya yaz" />
+                </div>
+            </div>
+
+            <div id="chat-box" class="card" style="height:60vh; overflow:auto"></div>
+
+            <div class="card">
+                <div class="inputbar">
+                    <input type="text" id="message" placeholder="Mesajınızı yazın…" />
+                    <button id="btnSend">Gönder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<script>
+    let stompClient = null;
+    let currentUser = "";
+
+    const urlParams = new URLSearchParams(window.location.search);
+    currentUser = urlParams.get("user");
+
+    if (!currentUser) {
+      alert("Kullanıcı adı bulunamadı. Lütfen giriş yapın.");
+      window.location.href = "/login.html";
+    }
+
+    document.getElementById("greeting").innerText = `${currentUser} olarak giriş yaptınız.`;
+
+    function connectWebSocket() {
+      const socket = new SockJS("/chat");
+      stompClient = Stomp.over(socket);
+
+      stompClient.connect({}, function () {
+        // Girişte okunmamışları okundu yap
+        fetch(`/messages/mark-all-read/${currentUser}`, { method: "PUT" });
+
+        stompClient.subscribe("/topic/messages/" + currentUser, function (message) {
+          const msg = JSON.parse(message.body);
+          renderMessage(msg);
+
+          // Mesaj bana geldiyse ve READ değilse işaretle
+          if (msg.receiver === currentUser && msg.status !== "READ") {
+            fetch(`/messages/${msg.id}/read`, { method: "PUT" });
+          }
+        });
+
+        // Listeleri yükle
+        loadUserLists();
+      });
+    }
+
+    function renderMessage(msg) {
+      const chatBox = document.getElementById("chat-box");
+      const display = `${msg.sender}: ${msg.content} (${msg.status})`;
+
+      let p = document.getElementById("msg-" + msg.id);
+      if (!p) {
+        p = document.createElement("div");
+        p.id = "msg-" + msg.id;
+        p.className = "msg " + (msg.sender === currentUser ? "me" : "other");
+        p.innerHTML = `<div>${display}</div><div class="meta">${msg.sender}</div>`;
+        chatBox.appendChild(p);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } else {
+        p.className = "msg " + (msg.sender === currentUser ? "me" : "other");
+        p.children[0].textContent = display;
+      }
+    }
+
+    function loadUserLists() {
+      // Kişi listesi
+      fetch(`/users/all/${currentUser}`)
+        .then(res => res.json())
+        .then(data => {
+          const userList = document.getElementById("user-list");
+          userList.innerHTML = "";
+          document.getElementById("user-count").textContent = data.length;
+          data.forEach(user => {
+            const li = document.createElement("li");
+            li.innerText = user;
+            li.onclick = () => {
+              document.getElementById("receiver").value = user;
+              loadChatHistory(user);
+            };
+            userList.appendChild(li);
+          });
+        });
+
+      // Sohbet geçmişi
+      fetch(`/users/conversations/${currentUser}`)
+        .then(res => res.json())
+        .then(data => {
+          const convList = document.getElementById("conversation-list");
+          convList.innerHTML = "";
+          document.getElementById("conv-count").textContent = data.length;
+          data.forEach(user => {
+            const li = document.createElement("li");
+            li.innerText = user;
+            li.onclick = () => {
+              document.getElementById("receiver").value = user;
+              loadChatHistory(user);
+            };
+            convList.appendChild(li);
+          });
+        });
+    }
+
+    function loadChatHistory(receiver) {
+      // Aradakileri okundu yap
+      fetch(`/messages/mark-read/${currentUser}/${receiver}`, { method: "PUT" });
+
+      const chatBox = document.getElementById("chat-box");
+      chatBox.innerHTML = "";
+
+      fetch(`/messages/${currentUser}/${receiver}`)
+        .then(res => res.json())
+        .then(data => {
+          data.forEach(msg => renderMessage(msg));
+        });
+    }
+
+    function sendMessage() {
+      if (!currentUser) {
+        alert("Giriş yapmadan mesaj gönderemezsiniz.");
+        return;
+      }
+      const receiver = document.getElementById("receiver").value.trim();
+      const content = document.getElementById("message").value.trim();
+
+      if (!receiver || !content) {
+        alert("Alıcı ve mesaj boş olamaz.");
+        return;
+      }
+
+      stompClient.send("/app/chat", {}, JSON.stringify({
+        sender: currentUser,
+        receiver: receiver,
+        content: content
+      }));
+
+      document.getElementById("message").value = "";
+    }
+
+    document.getElementById("btnSend").addEventListener("click", sendMessage);
+    document.getElementById("message").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    connectWebSocket();
+</script>
+</body>
+</html>

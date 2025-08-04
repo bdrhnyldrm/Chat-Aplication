@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kayıt Ol</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<div class="container">
+    <div class="card" style="width:100%;max-width:420px">
+        <h2>🆕 Kayıt Ol</h2>
+        <form id="registerForm">
+            <label for="username">Kullanıcı Adı</label>
+            <input id="username" required />
+            <label for="password">Şifre</label>
+            <input id="password" type="password" required />
+            <button type="submit" id="btnRegister" class="full">Kayıt Ol</button>
+            <div id="msg" class="badge success" style="display:none"></div>
+            <div id="err" class="badge" style="display:none"></div>
+        </form>
+        <p class="muted">Zaten hesabınız var mı? <a href="/login.html">Giriş Yap</a></p>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById("registerForm");
+    const ok = document.getElementById("msg");
+    const err = document.getElementById("err");
+    const btn = document.getElementById("btnRegister");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      ok.style.display = "none"; err.style.display = "none";
+      btn.disabled = true; btn.textContent = "Kaydediliyor…";
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      try {
+        const res = await fetch("/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+        if (!res.ok) throw new Error(await res.text() || "Kayıt başarısız");
+        await res.json();
+        ok.textContent = "✅ Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz…";
+        ok.style.display = "block";
+        setTimeout(() => window.location.href = "/login.html", 900);
+      } catch (e2) {
+        err.textContent = "❌ " + e2.message;
+        err.style.display = "block";
+      } finally {
+        btn.disabled = false; btn.textContent = "Kayıt Ol";
+      }
+    });
+</script>
+</body>
+</html>
