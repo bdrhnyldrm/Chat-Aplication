@@ -20,28 +20,28 @@ Bu proje, Spring Boot tabanlı bir backend ile gerçek zamanlı mesajlaşma sağ
 ### 3.2 Sohbet — Kullanıcı Görünümü
 <img width="1918" height="866" alt="Bedirhan sohbet geçmişi" src="https://github.com/user-attachments/assets/34d2c634-769a-4d7b-bc5e-218edff173af" />
 <img width="1918" height="862" alt="Resul sohbet geçmişi" src="https://github.com/user-attachments/assets/845dcd43-6b61-4978-9259-f5f1de316efa" />
-• Sol panel: Kişi Listesi ve Sohbet Geçmişi
-• Üstte alıcı seçimi yapılabilecek alan
-• Mesaj balonları gönderen kişiye göre renklendirilir
-• Mesaj durumu (SENT/READ) balon içinde görüntülenir
-• Gerçek zamanlı iletiler ve anlık okundu güncellemeleri
-• Sohbet açıldığında PUT /messages/mark-read/{currentUser}/{receiver} ile okunmamış mesajlar işaretlenir
+- Sol panel: Kişi Listesi ve Sohbet Geçmişi
+- Üstte alıcı seçimi yapılabilecek alan
+- Mesaj balonları gönderen kişiye göre renklendirilir
+- Mesaj durumu (SENT/READ) balon içinde görüntülenir
+- Gerçek zamanlı iletiler ve anlık okundu güncellemeleri
+- Sohbet açıldığında PUT /messages/mark-read/{currentUser}/{receiver} ile okunmamış mesajlar işaretlenir
 ## 4) Uygulama Akışları
 ### 1. Kimlik Doğrulama
-o Kullanıcı /auth/login ile giriş yapar
-o Başarılı girişte ?user= parametresi ile sohbet sayfasına yönlendirilir
+- Kullanıcı /auth/login ile giriş yapar
+- Başarılı girişte ?user= parametresi ile sohbet sayfasına yönlendirilir
 ### 2. Kişi ve Sohbet Listeleri
-o Girişte /users/all/{user} ve /users/conversations/{user} çağrıları ile listeler doldurulur
+- Girişte /users/all/{user} ve /users/conversations/{user} çağrıları ile listeler doldurulur
 ### 3. Geçmiş ve Okundu
-o Sohbet açıldığında /messages/{user}/{other} ile geçmiş yüklenir
-o Aynı anda /messages/mark-read/{user}/{other} çalışır
+- Sohbet açıldığında /messages/{user}/{other} ile geçmiş yüklenir
+- Aynı anda /messages/mark-read/{user}/{other} çalışır
 ### 4. Gerçek Zamanlı İletiler
-o İstemci /chat üzerinden STOMP bağlantısı kurar
-o /topic/messages/{user} kanalına abone olur
+- İstemci /chat üzerinden STOMP bağlantısı kurar
+- /topic/messages/{user} kanalına abone olur
 ### 5. Mesaj Gönderme
-o /app/chat hedefine STOMP mesajı (JSON) gönderilir
-o Karşı taraf için anlık bildirim alınır
+- /app/chat hedefine STOMP mesajı (JSON) gönderilir
+- Karşı taraf için anlık bildirim alınır
 ## 6) Güvenlik ve Doğrulama
-• Spring Security ile HTTP istekleri kontrol altında
-• WebSocket kanalı, uygulama içi yetkilendirme akışıyla entegre
-• İstemci tarafında hassas veri saklanmaz, yalnızca kullanıcı adı URL parametresi olarak taşınır
+- Spring Security ile HTTP istekleri kontrol altında
+- WebSocket kanalı, uygulama içi yetkilendirme akışıyla entegre
+- İstemci tarafında hassas veri saklanmaz, yalnızca kullanıcı adı URL parametresi olarak taşınır
