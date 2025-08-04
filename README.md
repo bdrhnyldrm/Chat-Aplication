@@ -13,13 +13,17 @@ Bu proje, Spring Boot tabanlı bir backend ile gerçek zamanlı mesajlaşma sağ
 • Ortak stil dosyası: style.css
 ## 3) Ekranlar ve Kullanıcı Deneyimi
 ### 3.1 Giriş Ekranı
+
 <img width="1918" height="870" alt="login page" src="https://github.com/user-attachments/assets/4501e3ed-d67a-4fcc-a56f-e991afeab0bb" />
+
 • Kilit ikonu ve başlık ile sade bir form düzeni
 • Modern koyu tema
 • Form gönderimi POST /auth/login ile yapılır; yanıt “Giriş başarılı” ise sohbet ekranına yönlendirilir.
 ### 3.2 Sohbet — Kullanıcı Görünümü
+
 <img width="1918" height="866" alt="Bedirhan sohbet geçmişi" src="https://github.com/user-attachments/assets/34d2c634-769a-4d7b-bc5e-218edff173af" />
 <img width="1918" height="862" alt="Resul sohbet geçmişi" src="https://github.com/user-attachments/assets/845dcd43-6b61-4978-9259-f5f1de316efa" />
+
 - Sol panel: Kişi Listesi ve Sohbet Geçmişi
 - Üstte alıcı seçimi yapılabilecek alan
 - Mesaj balonları gönderen kişiye göre renklendirilir
